@@ -76,7 +76,16 @@ async function run() {
             console.log(user)
             const query = { $or: [{ mobile: user.mobEmail }, { email: user.mobEmail }] }
             const result = await usersCollection.findOne(query)
-            res.send(result)
+
+            if (!result) {
+                return res.send({ message: 'credential wrong' })
+            }
+
+            const check = comparePass(user.pin, result.pin)
+            if (!check) {
+                return res.send({ message: 'forbidden access' })
+            }
+            res.send({ message: 'success', token: result.token, user:result })
 
         })
 
