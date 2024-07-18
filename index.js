@@ -4,6 +4,7 @@ const cors = require('cors')
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcryptjs = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 
 
@@ -39,13 +40,13 @@ async function run() {
         }
 
         // get api
-        app.get('/roll/:pin', async (req, res) => {
-            const pin = req.params.pin;
-            // console.log(pin)
-            const query = { pin: pin }
+        app.get('/roll/:email', async (req, res) => {
+            const email = req.params.email;
+            // console.log(email)
+            const query = { email: email }
             const result = await usersCollection.findOne(query)
             const roll = result.roll;
-            // console.log(roll)
+            console.log(roll)
             res.send({ roll })
         })
 
@@ -54,19 +55,20 @@ async function run() {
         app.post('/users', async (req, res) => {
             const user = req.body;
             // console.log(user)
+            const token = jwt.sign({ name: user.name, mobile: user.mobile, email: user.email }, '30a4e290308bdd5579c3d4f726a7585e2525d03a948b9aad9fe7b5e8091967ba87229bc7b3dec101a193f3bc092207b7598938244da57d024ae3eee6a87047ea', { expiresIn: '1h' })
             const data = {
-                // name, pin, mobile, email, roll: "user", status: 'pending'
                 name: user.name,
                 pin: await hashPass(user.pin),
                 mobile: user.mobile,
+                email: user.email,
                 roll: user.roll,
                 status: user.status,
-
+                token: token
             }
-            console.log(data.pin)
+
 
             const result = await usersCollection.insertOne(data);
-            res.send(result)
+            res.send({ result, token })
         })
 
         app.post('/login', async (req, res) => {
